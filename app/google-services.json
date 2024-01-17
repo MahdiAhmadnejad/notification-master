@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "355976138181",
+    "project_id": "notificationtest-cd8c5",
+    "storage_bucket": "notificationtest-cd8c5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355976138181:android:6f3b71e58f5754cd9c8fac",
+        "android_client_info": {
+          "package_name": "com.Maah.notificationmaster"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgESw-IABqgvCrNHeFuEBOowDhJYAKraw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
