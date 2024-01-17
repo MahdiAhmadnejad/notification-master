@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
 import android.widget.Toast;
+import android.Manifest;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,7 +17,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -27,6 +27,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String CHANNEL_ID = String.valueOf(R.string.my_channel_id);
     private static final String CHANNEL_NAME = String.valueOf(R.string.my_channel);
+
     private static final String TAG = "MyFirebaseMsgService";
 
     @Override
@@ -68,7 +69,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
         }
     }
-
 
     private void showNotificationWithImage(String title, String body, @Nullable Bitmap image)
     {
@@ -131,6 +131,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // You can send it to your server or perform any necessary actions
         FirebaseMessaging.getInstance().subscribeToTopic("your_topic_name");
         Log.d(TAG, "onNewToken: " + token);
-        Toast.makeText(this, "your token is generated", Toast.LENGTH_SHORT).show()     ;
+        Toast.makeText(this, "your token is generated", Toast.LENGTH_SHORT).show();
     }
 }
