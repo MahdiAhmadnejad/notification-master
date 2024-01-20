@@ -1,5 +1,6 @@
 package com.Maah.notificationmaster;
 
+import android.app.Activity;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -23,12 +24,38 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private static final String CHANNEL_ID = String.valueOf(R.string.my_channel_id);
     private static final String CHANNEL_NAME = String.valueOf(R.string.my_channel);
     private static final String TAG = "MyFirebaseMsgService";
     int id = 0;
+
+    private static final Map<String, Class<? extends Activity>> DESTINATION_MAP;
+
+    static {
+        Map<String, Class<? extends Activity>> map = new HashMap<>();
+        map.put("main", MainActivity.class);
+
+        DESTINATION_MAP = Collections.unmodifiableMap(map);
+    }
+
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         Log.d(TAG, "onMessageReceived: " + remoteMessage.getData());
@@ -41,11 +68,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             String title = remoteMessage.getData().get("title");
             String body = remoteMessage.getData().get("body");
             String imageUrl = remoteMessage.getData().get("image");
+
             String action = remoteMessage.getData().get("action");
             String action_destination = remoteMessage.getData().get("action_destination");
+
             String idString = remoteMessage.getData().get("id");
             getInt(idString);
 
+            if (action != null){
             try {
                 Glide.with(getApplicationContext())
                         .asBitmap()
@@ -69,6 +99,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             } catch (Exception e) {
                 Log.e(TAG, "Error loading image: ", e);
                 showNotificationWithImage(title, body, null, action, action_destination, id);
+                }
             }
         }
     }
@@ -79,17 +110,20 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_android_black)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setPriority(NotificationCompat.PRIORITY_HIGH);
 
+        Class<? extends Activity> destinationActivity = DESTINATION_MAP.get(actionDestination);
+        Log.d(TAG, "mapping destination is : " + destinationActivity);
+
         // Add action buttons
-        if (action.equals("alarming") && actionDestination != null) {
+        if (action.equals("alarming") && destinationActivity != null) {
             // Create PendingIntents for actions
-            Intent actionIntent = new Intent(this, MainActivity.class);
-            PendingIntent pendingIntent1 = PendingIntent.getActivity(this, 0, actionIntent, PendingIntent.FLAG_IMMUTABLE);
-            builder.addAction(R.drawable.ic_launcher_foreground, getString(R.string.show), pendingIntent1);
+            Intent actionIntent = new Intent(this, destinationActivity);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, actionIntent, PendingIntent.FLAG_IMMUTABLE);
+            builder.addAction(R.drawable.ic_android_black, getString(R.string.show), pendingIntent);
         }
 
 
@@ -117,6 +151,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             return;
         }
         notificationManager.notify(notificationId, builder.build());
+
+        sendDataToAPI(id);
     }
 
     private void createNotificationChannel() {
@@ -156,5 +192,44 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // You can send it to your server or perform any necessary actions
         FirebaseMessaging.getInstance().subscribeToTopic("Alarm");
         Log.d(TAG, "onNewToken: " + token);
+    }
+
+    private void sendDataToAPI(int id) {
+        // Send notification ID to API
+        String url = "https://myapi.com/logNotification";
+
+        JSONObject data = new JSONObject();
+        try {
+            data.put("id", String.valueOf(id));
+            // ... other data
+        } catch (JSONException e) {
+            Log.e(TAG, "Error creating JSON object:", e);
+            // Handle the error appropriately (e.g., log, notify user, try again)
+            return; // Or take other appropriate action
+        }
+
+
+        RequestBody body = RequestBody.create(data.toString(), MediaType.get("application/json"));
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                // Handle error
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) {
+                if (response.isSuccessful()) {
+                    // API call succeeded
+                    Log.d(TAG, "onResponse: ");
+                }
+            }
+        });
     }
 }
